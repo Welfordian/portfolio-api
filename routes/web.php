@@ -15,14 +15,12 @@
 
 $router->group(['prefix' => '/v1'], function () use ($router) {
     $router->get('/posts', function () {
-        header('Access-Control-Allow-Origin: *');
-
         return \App\Models\Post::all();
     });
 
     $router->get('/posts/{post}', function ($post) {
         header('Access-Control-Allow-Origin: *');
-        
+
         $post = \App\Models\Post::where('slug', $post)->firstOrFail();
 
         return $post;
