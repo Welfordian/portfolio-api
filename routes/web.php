@@ -25,6 +25,8 @@ $router->group(['prefix' => '/v1'], function () use ($router) {
     });
 
     $router->post('/playlists', function (\Illuminate\Http\Request  $request) {
+        header('Access-Control-Allow-Origin: *');
+        
         $data = $request->json()->all();
         $rules = ['tracks' => 'present|array', 'videos' => 'present|array'];
 
