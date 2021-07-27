@@ -23,4 +23,31 @@ $router->group(['prefix' => '/v1'], function () use ($router) {
 
         return $post;
     });
+
+    $router->post('/playlists', function (\Illuminate\Http\Request  $request) {
+        $data = $request->json()->all();
+        $rules = ['tracks' => 'present|array', 'videos' => 'present|array'];
+
+        $validator = Validator::make($data, $rules);
+
+        if ($validator->fails()) {
+            return $validator->messages();
+        }
+
+        $slug = \Illuminate\Support\Str::random(22);
+
+        file_put_contents(__DIR__ . '/../public/playlists/' . $slug . '.json', json_encode($data));
+
+        return [
+            'slug' => $slug
+        ];
+    });
+
+    $router->get('/playlists/{slug}', function ($slug) {
+        if (file_exists(__DIR__ . '/../public/playlists/' . $slug . '.json')) {
+            header('Content-Type: application/json');
+
+            return file_get_contents(__DIR__ . '/../public/playlists/' . $slug . '.json');
+        }
+    });
 });
