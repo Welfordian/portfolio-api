@@ -19,8 +19,12 @@ $router->group(['prefix' => '/v1'], function () use ($router) {
             if (! $request->has('secret') || $request->get('secret') !== env('INTERNAL_SECRET')) abort(401);
 
             $client = new \GuzzleHttp\Client();
-            
+
             $client->post('https://api.digitalocean.com/v2/apps/' . env('DIGITALOCEAN_APP_ID') . '/deployments', [
+                'json' => [
+                    'force_build' => true
+                ],
+
                 'headers' => [
                     'Authorization' => 'Bearer ' . env('DIGITALOCEAN_KEY')
                 ]
