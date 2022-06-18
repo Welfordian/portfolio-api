@@ -14,14 +14,18 @@
 */
 
 $router->group(['prefix' => '/v1'], function () use ($router) {
-    $router->get('/posts', function () {
-        return \App\Models\Post::all();
-    });
+    $router->group(['prefix' => 'internal'], function () use ($router) {
+        $router->post('build', function (\Illuminate\Http\Request $request) {
+            if (! $request->has('secret') || $request->get('secret') !== env('INTERNAL_SECRET')) abort(401);
 
-    $router->get('/posts/{post}', function ($post) {
-        $post = \App\Models\Post::where('slug', $post)->firstOrFail();
-
-        return $post;
+            $client = new \GuzzleHttp\Client();
+            
+            $client->post('https://api.digitalocean.com/v2/apps/' . env('DIGITALOCEAN_APP_ID') . '/deployments', [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . env('DIGITALOCEAN_KEY')
+                ]
+            ]);
+        });
     });
 
     $router->post('/playlists', function (\Illuminate\Http\Request  $request) {
