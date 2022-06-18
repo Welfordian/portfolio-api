@@ -58,4 +58,8 @@ $router->group(['prefix' => '/v1'], function () use ($router) {
             return file_get_contents(__DIR__ . '/../public/playlists/' . $slug . '.json');
         }
     });
+
+    $router->get('/ping', function () {
+        return ['pong' => true];
+    });
 });
