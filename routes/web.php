@@ -55,7 +55,7 @@ $router->group(['prefix' => '/v1'], function () use ($router) {
 
     $router->put('/bookmarks', function (\Illuminate\Http\Request $request) {
         if (str_replace('Bearer: ', '', $request->header('Authorization')) !== 'eu9JU801P9#iPliIev#&g1ej7!$oB2K') return ['success' => false, 'message' => 'Unauthorized'];
-        
+
         $data = $request->json()->all();
         $id = $request->json()->get('id');
 
