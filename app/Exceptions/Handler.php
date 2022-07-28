@@ -49,48 +49,50 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Throwable $exception)
     {
-        if (! empty($exception) ) {
-            $response = [
-                'error' => 'Server error'
-            ];
+        try {
+            if (! empty($exception) ) {
+                $response = [
+                    'error' => 'Server error'
+                ];
 
-            if (config('app.debug')) {
-                $response['exception'] = get_class($exception);
-                $response['message'] = $exception->getMessage();
-                $response['trace'] = $exception->getTrace();
+                if (config('app.debug')) {
+                    $response['exception'] = get_class($exception);
+                    $response['message'] = $exception->getMessage();
+                    $response['trace'] = $exception->getTrace();
+                }
+
+                if ($exception instanceof ValidationException){
+
+                    return $this->convertValidationExceptionToResponse($exception, $request);
+
+                } else if($exception instanceof AuthenticationException){
+
+                    $status = 401;
+
+                    $response['error'] = 'Authentication exception';
+
+                } else if($exception instanceof \PDOException){
+
+                    $status = 500;
+
+                    $response['error'] = 'Query exception';
+
+                } else if($this->isHttpException($exception)){
+
+                    $status = $exception->getStatusCode();
+
+                    $response['error'] = 'HTTP error';
+                    $response['status'] = $status;
+
+                } else {
+                    $status = method_exists($exception, 'getStatusCode') ? $exception->getStatusCode() : 400;
+
+                }
+
+                return response()->json($response,$status);
+
             }
-
-            if ($exception instanceof ValidationException){
-
-                return $this->convertValidationExceptionToResponse($exception, $request);
-
-            } else if($exception instanceof AuthenticationException){
-
-                $status = 401;
-
-                $response['error'] = 'Authentication exception';
-
-            } else if($exception instanceof \PDOException){
-
-                $status = 500;
-
-                $response['error'] = 'Query exception';
-
-            } else if($this->isHttpException($exception)){
-
-                $status = $exception->getStatusCode();
-
-                $response['error'] = 'HTTP error';
-                $response['status'] = $status;
-
-            } else {
-                $status = method_exists($exception, 'getStatusCode') ? $exception->getStatusCode() : 400;
-
-            }
-
-            return response()->json($response,$status);
-
-        }
+        } catch (\Exception $e) {}
 
         return parent::render($request, $exception);
     }

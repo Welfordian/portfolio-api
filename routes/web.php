@@ -19,11 +19,19 @@ $router->group(['prefix' => '/v1'], function () use ($router) {
 
         $bookmarks = json_decode(file_get_contents(__DIR__ . '/../public/bookmarks.json'), true);
 
+        $open_graph = \App\Providers\OpenGraph::fetch($data['url']);
+
+        if ($open_graph) {
+            $data['openGraph'] = \App\Providers\OpenGraph::fetch($data['url'])->_values;
+        } else {
+            $data['openGraph'] = [];
+        }
+
         $bookmarks[$id] = $data;
 
         file_put_contents(__DIR__ . '/../public/bookmarks.json', json_encode($bookmarks, JSON_PRETTY_PRINT));
 
-        return ['success' => true];
+        return ['success' => true, 'bookmarks' => $bookmarks];
     });
 
     $router->delete('/bookmarks', function (\Illuminate\Http\Request $request) {
