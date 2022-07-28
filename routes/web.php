@@ -14,6 +14,57 @@
 */
 
 $router->group(['prefix' => '/v1'], function () use ($router) {
+    $router->get('/bookmarks', function (\Illuminate\Http\Request $request) {
+        $bookmarks = json_decode(file_get_contents(__DIR__ . '/../public/bookmarks.json'), true);
+
+        return ['bookmarks' => $bookmarks];
+    });
+
+    $router->post('/bookmarks', function (\Illuminate\Http\Request $request) {
+        $data = $request->json()->all();
+        $id = $data['id'];
+
+        if ($data['parentId'] !== "50") return;
+
+        $bookmarks = json_decode(file_get_contents(__DIR__ . '/../public/bookmarks.json'), true);
+
+        $bookmarks[$id] = $data;
+
+        file_put_contents(__DIR__ . '/../public/bookmarks.json', json_encode($bookmarks, JSON_PRETTY_PRINT));
+
+        return ['success' => true];
+    });
+
+    $router->delete('/bookmarks', function (\Illuminate\Http\Request $request) {
+        $id = $request->json()->get('id');
+
+        $bookmarks = json_decode(file_get_contents(__DIR__ . '/../public/bookmarks.json'), true);
+
+        if (array_key_exists($id, $bookmarks)) {
+            unset($bookmarks[$id]);
+        }
+
+        file_put_contents(__DIR__ . '/../public/bookmarks.json', json_encode($bookmarks, JSON_PRETTY_PRINT));
+
+        return ['success' => true];
+    });
+
+    $router->put('/bookmarks', function (\Illuminate\Http\Request $request) {
+        $data = $request->json()->all();
+        $id = $request->json()->get('id');
+
+        $bookmarks = json_decode(file_get_contents(__DIR__ . '/../public/bookmarks.json'), true);
+
+        if (array_key_exists($id, $bookmarks)) {
+            $bookmarks[$id]['title'] = $data['title'];
+            $bookmarks[$id]['url'] = $data['url'];
+        }
+
+        file_put_contents(__DIR__ . '/../public/bookmarks.json', json_encode($bookmarks, JSON_PRETTY_PRINT));
+
+        return ['success' => true];
+    });
+
     $router->group(['prefix' => 'internal'], function () use ($router) {
         $router->post('build', function (\Illuminate\Http\Request $request) {
             if (! $request->has('secret') || $request->get('secret') !== env('INTERNAL_SECRET')) abort(401);
@@ -32,7 +83,7 @@ $router->group(['prefix' => '/v1'], function () use ($router) {
         });
     });
 
-    $router->post('/playlists', function (\Illuminate\Http\Request  $request) {
+    $router->post('/playlists', function (\Illuminate\Http\Request $request) {
         $data = $request->json()->all();
         $rules = ['tracks' => 'present|array', 'videos' => 'present|array'];
 
