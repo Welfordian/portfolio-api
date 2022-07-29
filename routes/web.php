@@ -2,6 +2,33 @@
 
 /** @var \Laravel\Lumen\Routing\Router $router */
 
+function saveImage($url)
+{
+    $client = new GuzzleHttp\Client();
+
+    try {
+        $response = $client->post('https://api.cloudflare.com/client/v4/accounts/d482b503bd5610a55f0595756bf14c4c/images/v1', [
+            'headers' => [
+                'Authorization' => 'Bearer vvlJiYAPBRN3FFtqbSPuyKx_rmCFDsK50jcUZttu'
+            ],
+
+            'multipart' => [[
+                'name'     => 'file',
+                'contents' => file_get_contents($url),
+                'filename' => '@./' . pathinfo($url, PATHINFO_BASENAME)
+            ]]
+        ]);
+    } catch (\GuzzleHttp\Exception\ClientException $e) {
+        dd($e->getResponse()->getBody()->getContents());
+    }
+
+    $variants = collect((json_decode($response->getBody()->getContents(), true))['result']['variants']);
+
+    return $variants->filter(function ($variant) {
+        return str_contains($variant, 'publicresource');
+    })->first();
+}
+
 $router->group(['prefix' => '/v1'], function () use ($router) {
     $router->get('/bookmarks', function (\Illuminate\Http\Request $request) {
         $bookmarks = json_decode(file_get_contents(__DIR__ . '/../public/bookmarks.json'), true);
@@ -23,6 +50,7 @@ $router->group(['prefix' => '/v1'], function () use ($router) {
 
         if ($open_graph) {
             $data['openGraph'] = \App\Providers\OpenGraph::fetch($data['url'])->_values;
+            $data['openGraph']['image'] = saveImage($data['openGraph']['image']);
         } else {
             $data['openGraph'] = [];
         }
